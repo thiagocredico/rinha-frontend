@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en"  data-theme="emerald">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>JSON Tree Viewer</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/daisyui@3.9.3/dist/full.css"
+      rel="stylesheet"
+      type="text/css"
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Inclua links para arquivos CSS aqui, se necessário -->
+  </head>
+  <body class="flex flex-col justify-center items-center ">
+
+    <main class="container text-black">
+        <h2 class="font-bold text-left text-2xl break-words">{{ file_name }}</h2>
+        <div id="json-tree">
+            <!-- Render the JSON tree structure here -->
+            <pre>{{ formatted_json|safe }}</pre>
+        </div>
+    </main>
+
+  </body>
+</html>

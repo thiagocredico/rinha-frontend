@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en"  data-theme="emerald">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>JSON Tree Viewer</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/daisyui@3.9.3/dist/full.css"
+      rel="stylesheet"
+      type="text/css"
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Inclua links para arquivos CSS aqui, se necessário -->
+  </head>
+  <body class="flex flex-col h-screen justify-center items-center text-black">
+    <header>
+      <h1 class="text-5xl font-bold">JSON Tree Viewer</h1>
+    </header>
+
+    <main>
+      <h3 class="text-base p-6">
+        Simple JSON Viewer that runs completely on-client. No data exchange
+      </h3>
+      <form method="post" enctype="multipart/form-data" id="upload-form" class="flex justify-center items-center">
+        {% csrf_token %}
+        <label class="btn btn-outline btn-sm bg-gray-100 hover:bg-black normal-case border-black text-black" for="json-file-input">Load JSON</label>
+        <input type="file" name="json_file" id="json-file-input" title="JSON" class="hidden"/>
+      </form>
+      {% block content %}{% endblock %}
+    </main>
+
+
+    <script>
+      // When a file is selected, automatically submit the form
+      document.getElementById('json-file-input').addEventListener('change', function () {
+          document.getElementById('upload-form').submit();
+      });
+    </script>
+  </body>
+</html>
