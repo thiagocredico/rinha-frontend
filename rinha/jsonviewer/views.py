@@ -1,7 +1,9 @@
 import ijson
+import json
+
+from django.http import StreamingHttpResponse
 from django.shortcuts import render
 from .forms import JSONDataForm
-import json
 
 
 def upload_json(request):
@@ -29,37 +31,48 @@ def upload_json(request):
     return render(request, "jsonviewer/base.html", {"form": form})
 
 
+def process_chunk(chunk, user_to_repos):
+    data = json.loads(chunk)
+    for record in data:
+        user = record["actor"]["login"]
+        repo = record["repo"]["name"]
+        if user not in user_to_repos:
+            user_to_repos[user] = set()
+        user_to_repos[user].add(repo)
+
+
+def generate_json_data(file):
+    buffer_size = 1024 * 1024  # 1MB
+    while True:
+        chunk = file.read(buffer_size)
+        if not chunk:
+            break
+        yield chunk
+
+
 def display_json_tree(request):
     if request.method == "POST" and "json_file" in request.FILES:
         uploaded_file = request.FILES["json_file"]
+        user_to_repos = {}
 
-        try:
-            json_data = []
+        # Use ijson to parse JSON incrementally and yield chunks
+        parser = ijson.parse(uploaded_file)
+        buffer = []
+        for prefix, event, value in parser:
+            if event == 'start_map':
+                buffer.append('{')
+            elif event == 'end_map':
+                buffer.append('}')
+                process_chunk(''.join(buffer), user_to_repos)
+                buffer.clear()
+            elif event == 'map_key':
+                buffer.append(f'"{value}":')
+            elif event == 'number' or event == 'string':
+                buffer.append(f'"{value}",')
 
-            # Create an ijson parser
-            parser = ijson.parse(uploaded_file)
+        # Return the result in a JSON format
+        result = '{{"user_to_repos": {}}}'.format(json.dumps(user_to_repos))
 
-            for prefix, event, value in parser:
-                if event == "map_key":
-                    current_key = value
-                elif (
-                    event == "number"
-                    or event == "string"
-                    or event == "boolean"
-                    or event == "null"
-                ):
-                    json_data.append((prefix, current_key, value))
-
-        except ijson.JSONError:
-            return render(
-                request, "jsonviewer/error.html", {
-                    "message": "Arquivo JSON inválido"}
-            )
-
-        return render(
-            request, "jsonviewer/display_json_tree.html", {
-                "json_data": json_data}
-        )
+        return StreamingHttpResponse([result], content_type="application/json")
     else:
-        return render(request, "jsonviewer/display_json_tree.html", {
-            "json_data": None})
+        return render(request, "jsonviewer/display_json_tree.html", {"json_data": None})
